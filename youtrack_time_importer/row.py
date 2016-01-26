@@ -160,12 +160,12 @@ class Row(metaclass=MetaRow):
 
 
 class ManictimeRow(Row):
-    datetime_format = "%Y-%m-%d %H:%M:%S"
+    datetime_format = "%d/%m/%Y %H:%M:%S"
 
     def create_work_item(self):
         work_item = WorkItem()
 
-        description = self.data.get('Notes', self.data.get('Description', ""))
+        description = self.data.get('Notes')
         duration = self.duration_as_minutes()
         date = round(self.start_datetime().timestamp()*1000)
 
@@ -181,22 +181,21 @@ class ManictimeRow(Row):
 
     def start_datetime(self):
         """Return a datetime object representation of the start date and time"""
-        date_string = self.data.get('Start date')
-        time_string = self.data.get('Start time')
-        start_datetime_string = "{date} {time}".format(date=date_string, time=time_string)
-        return datetime.datetime.strptime(start_datetime_string, self.datetime_format)
+
+        return datetime.datetime.strptime(self.data.get('Start'), self.datetime_format)
 
     def __str__(self):
-        description = self.data.get("Description")
+        tags = self.data.get("Name")
+        description = self.data.get("Notes")
         time = self.start_datetime().strftime("%H:%M")
         date = self.start_datetime().strftime("%d/%m/%y")
-        return "{d} - {t} {dt}".format(d=description, t=time, dt=date)
+        return "{tags} / {d} - {t} {dt}".format(tags=tags, d=description, t=time, dt=date)
 
     def is_ignored(self):
-        return "ignore" in self.data.get("Description")
+        return "ignore" in self.data.get("Name")
 
     def find_issue_id(self):
-        match = self.issue_finder.search(self.data.get("Description"))
+        match = self.issue_finder.search(self.data.get("Name"))
         try:
             return match.group('issue_id')
         except AttributeError as e:
@@ -236,7 +235,7 @@ class TogglCSVRow(Row):
         return "{d} - {t} {dt}".format(d=description, t=time, dt=date)
 
     def is_ignored(self):
-        return "ignore" in self.data.get("Description")
+        return "ignore" in self.data.get("Tags")
 
     def find_issue_id(self):
         match = self.issue_finder.search(self.data.get("Description"))
